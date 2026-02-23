@@ -162,3 +162,4 @@ docker run -p 8000:8000 karaoke-backend
 **享受你的卡拉OK时光！** 🎤🎵
 
 有问题？查看完整文档：`DEPLOYMENT_GUIDE.md`
+\n# trigger build
