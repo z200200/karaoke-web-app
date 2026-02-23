@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Aura Studio — Compact Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;600;800&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --main-purple: #1a0514;
+            --vocal-accent: #A54B73;
+            --mac-blue: #6EB4D1;
+            --geek-yellow: #FFD166;
+        }
+
+        body {
+            font-family: 'Lexend', sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* 全局 Apple 深紫背景 */
+        .aura-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: var(--main-purple);
+            overflow: hidden;
+        }
+
+        .aura-blob {
+            position: absolute;
+            width: 90vw;
+            height: 90vw;
+            filter: blur(140px);
+            opacity: 0.45;
+            border-radius: 50%;
+            animation: drift 25s infinite alternate ease-in-out;
+        }
+
+        .blob-1 {
+            background: #6a0b3e;
+            top: -20%;
+            left: -10%;
+        }
+
+        .blob-2 {
+            background: #1a1163;
+            bottom: -20%;
+            right: -10%;
+        }
+
+        @keyframes drift {
+            from {
+                transform: translate(0, 0);
+            }
+
+            to {
+                transform: translate(5%, 5%);
+            }
+        }
+
+        /* 瓷感卡片 */
+        .apple-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(50px) saturate(160%);
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* 歌词 */
+        .lyric-line {
+            transition: all 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+            font-size: 2.5rem;
+            line-height: 1.15;
+            margin: 30px 0;
+            opacity: 0.15;
+            font-weight: 800;
+            filter: blur(2px);
+            text-align: left;
+        }
+
+        .lyric-active {
+            opacity: 1;
+            transform: scale(1.05);
+            filter: blur(0);
+        }
+
+        .lyric-past {
+            opacity: 0.4;
+            filter: blur(1px);
+        }
+
+        @media (max-width: 768px) {
+            .lyric-line {
+                font-size: 1.5rem;
+                margin: 20px 0;
+            }
+        }
+
+        /* --- 处理窗口 (1/3 展示 + 2/3 日志) --- */
+        #logPanel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            z-index: 150;
+            overflow: hidden;
+            visibility: hidden;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(10, 10, 15, 0.98);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #logPanel.active {
+            height: 100%;
+            visibility: visible;
+        }
+
+        .log-top {
+            height: 35%;
+            position: relative;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .gear {
+            position: absolute;
+            animation: spin 15s linear infinite;
+            color: rgba(255, 255, 255, 0.05);
+        }
+
+        .gear-rev {
+            animation: spin 12s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .big-percent {
+            font-size: 4rem;
+            font-weight: 900;
+            font-style: italic;
+            color: var(--geek-yellow);
+            line-height: 1;
+            position: relative;
+            z-index: 10;
+        }
+
+        .worker-belt {
+            width: 80%;
+            height: 60px;
+            position: relative;
+            margin-top: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .minion-squad {
+            position: absolute;
+            bottom: 0;
+            left: 0%;
+            display: flex;
+            gap: 15px;
+            transform: translateX(-50%);
+            transition: left 1s ease-in-out;
+        }
+
+        .minion {
+            transform-origin: bottom;
+            animation: bounce 0.6s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-5px);
+            }
+        }
+
+        .log-console {
+            height: 65%;
+            padding: 20px 40px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--geek-yellow);
+            opacity: 0.8;
+        }
+
+        /* --- 按钮与控制台：比例压缩 --- */
+        .vocal-dock {
+            background: var(--vocal-accent);
+            color: #fff;
+            border-radius: 60px;
+            padding: 5px 20px;
+            box-shadow: 0 10px 40px rgba(165, 75, 115, 0.3);
+        }
+
+        .play-btn-white {
+            background: #fff;
+            color: var(--vocal-accent);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            height: 4px;
+            border-radius: 10px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Input Styling */
+        .glass-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 0.75rem 1rem;
+            color: #fff;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--mac-blue);
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-6 min-h-screen flex flex-col gap-4 md:gap-6">
+
+    <div class="aura-bg">
+        <div class="aura-blob blob-1"></div>
+        <div class="aura-blob blob-2"></div>
+    </div>
+
+    <!-- 上部布局 -->
+    <div class="flex-1 flex flex-col md:flex-row gap-4 md:gap-6 min-h-0">
+        <!-- 左侧功能塔 (宽度固定) -->
+        <div class="w-full md:w-[320px] flex flex-col gap-4 md:gap-6">
+            <!-- 模块 1：控制与链接 -->
+            <div class="apple-card p-4 flex flex-col gap-4 shadow-xl">
+                <div class="flex gap-2">
+                    <button onclick="document.getElementById('aF').click()"
+                        class="flex-1 bg-[#6EB4D1]/20 p-3 rounded-2xl flex flex-col items-center justify-center gap-1 hover:bg-white/10 transition active:scale-95 border-none">
+                        <i data-lucide="upload" size="18" class="text-blue-400"></i>
+                        <span class="text-[8px] font-black uppercase tracking-widest text-white/40">LOCAL</span>
+                    </button>
+                    <button onclick="cancelProcess()"
+                        class="flex-1 bg-[#A54B73]/20 p-3 rounded-2xl flex flex-col items-center justify-center gap-1 hover:bg-red-900/40 transition active:scale-90 border-none">
+                        <i data-lucide="x-circle" size="18" class="text-red-400"></i>
+                        <span class="text-[8px] font-black text-red-400 uppercase tracking-widest">STOP</span>
+                    </button>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-[9px] font-black text-white/30 uppercase tracking-widest px-1">YouTube
+                        URL</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="ytUrl" placeholder="Paste link..." class="glass-input flex-1 text-xs">
+                        <button onclick="processYoutube()"
+                            class="bg-white/10 p-2 rounded-xl hover:bg-white/20 active:scale-90 transition">
+                            <i data-lucide="sparkles" size="16" class="text-yellow-400"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="aF" class="hidden" accept="audio/*" onchange="updateUI()">
+
+            <!-- 模块 2：历史记录窗口扩展 -->
+            <div
+                class="flex-1 apple-card p-4 md:p-6 flex flex-col overflow-hidden shadow-2xl border-none min-h-[200px]">
+                <h3 class="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 px-2">Library Archive
+                </h3>
+                <div id="hL" class="flex-1 overflow-y-auto space-y-2 no-scrollbar pr-2"></div>
+            </div>
+        </div>
+
+        <!-- 右侧舞台 -->
+        <div class="flex-1 apple-card relative overflow-hidden border border-white/10 shadow-2xl min-h-[400px]">
+            <!-- 极客处理层 -->
+            <div id="logPanel" class="flex flex-col">
+                <div class="log-top">
+                    <i data-lucide="settings" class="gear"
+                        style="width:400px; height:400px; top:-150px; left:-50px;"></i>
+                    <i data-lucide="settings" class="gear gear-rev"
+                        style="width:350px; height:350px; bottom:-100px; right:50px;"></i>
+                    <i data-lucide="settings" class="gear"
+                        style="width:250px; height:250px; top:20px; right:-80px;"></i>
+
+                    <div id="pP" class="big-percent">0%</div>
+
+                    <div class="worker-belt">
+                        <div id="minionSquad" class="minion-squad" style="left: 0%">
+                            <!-- Kevin -->
+                            <div class="minion"><svg width="24" height="45" viewBox="0 0 40 70">
+                                    <rect x="5" y="5" width="30" height="50" rx="15" fill="#FFD166" />
+                                    <circle cx="14" cy="20" r="7" fill="#eee" stroke="#333" stroke-width="2" />
+                                    <circle cx="26" cy="20" r="7" fill="#eee" stroke="#333" stroke-width="2" />
+                                    <path d="M5 45 Q20 50 35 45 L35 55 Q20 60 5 55 Z" fill="#2563eb" />
+                                </svg></div>
+                            <!-- Stuart -->
+                            <div class="minion" style="animation-delay: 0.1s"><svg width="26" height="40"
+                                    viewBox="0 0 40 60">
+                                    <rect x="5" y="10" width="30" height="40" rx="15" fill="#FFD166" />
+                                    <circle cx="20" cy="22" r="9" fill="#eee" stroke="#333" stroke-width="2" />
+                                    <circle cx="20" cy="22" r="2" fill="#000" />
+                                    <path d="M5 40 Q20 45 35 40 L35 50 Q20 55 5 50 Z" fill="#2563eb" />
+                                </svg></div>
+                            <!-- Bob -->
+                            <div class="minion" style="animation-delay: 0.2s"><svg width="28" height="32"
+                                    viewBox="0 0 40 50">
+                                    <rect x="5" y="10" width="30" height="30" rx="15" fill="#FFD166" />
+                                    <circle cx="14" cy="22" r="6" fill="#eee" stroke="#333" />
+                                    <circle cx="26" cy="22" r="6" fill="#eee" stroke="#333" />
+                                    <path d="M5 30 Q20 35 35 30 L35 40 Q20 45 5 40 Z" fill="#2563eb" />
+                                </svg></div>
+                            <!-- Dave -->
+                            <div class="minion" style="animation-delay: 0.3s"><svg width="24" height="40"
+                                    viewBox="0 0 40 60">
+                                    <rect x="5" y="10" width="30" height="40" rx="15" fill="#FFD166" />
+                                    <circle cx="14" cy="22" r="7" fill="#eee" stroke="#333" />
+                                    <circle cx="26" cy="22" r="7" fill="#eee" stroke="#333" />
+                                    <path d="M5 40 Q20 45 35 40 L35 50 Q20 55 5 50 Z" fill="#2563eb" />
+                                </svg></div>
+                        </div>
+                        <div class="absolute bottom-[-4px] w-full h-1 bg-yellow-400/20 rounded-full overflow-hidden">
+                            <div id="pBar"
+                                class="h-full bg-yellow-400 shadow-[0_0_15px_#FFD166] transition-all duration-1000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="lC" class="log-console no-scrollbar"></div>
+            </div>
+
+            <!-- 歌词舞台 -->
+            <div id="lyricContainer"
+                class="h-full overflow-y-auto no-scrollbar py-[30vh] px-8 md:px-20 text-center scroll-smooth">
+                <div
+                    class="text-white/5 text-[6rem] md:text-[10rem] font-black italic mt-20 select-none tracking-tighter uppercase">
+                    AURA</div>
+            </div>
+            <div class="absolute top-6 left-6 md:top-10 md:left-10">
+                <h2 id="songTitle"
+                    class="text-xl md:text-2xl font-black tracking-tighter uppercase mb-1 drop-shadow-lg">Studio Idle
+                </h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部控制座 -->
+    <footer class="apple-card p-4 flex flex-col md:flex-row items-center gap-4 md:gap-8 shadow-2xl border-none">
+        <!-- 播放岛台 -->
+        <div class="vocal-dock flex items-center gap-4 md:gap-6 py-2">
+            <button onclick="skip(-5)" class="active:scale-75 transition-transform text-white/70 hover:text-white"><i
+                    data-lucide="rotate-ccw" size="16"></i></button>
+            <button onclick="togglePlay()" id="btnPlay"
+                class="play-btn-white active:scale-90 transition w-10 h-10 shadow-lg">
+                <i data-lucide="play" fill="currentColor" size="18" id="playIcon"></i>
+            </button>
+            <button onclick="skip(5)" class="active:scale-75 transition-transform text-white/70 hover:text-white"><i
+                    data-lucide="rotate-cw" size="16"></i></button>
+        </div>
+
+        <div class="flex-1 w-full flex flex-col md:flex-row items-center gap-4 md:gap-6">
+            <!-- 进度 -->
+            <input type="range" id="skB" class="w-full md:flex-1 cursor-pointer" value="0">
+
+            <!-- 调节滑块 (移动端可自动换行或横向滚动) -->
+            <div class="w-full md:w-auto flex overflow-x-auto no-scrollbar gap-2 md:gap-4 items-center py-1">
+                <div
+                    class="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/5 whitespace-nowrap">
+                    <span class="text-[8px] font-black text-white/30">VOCAL</span>
+                    <input type="range" id="vV" min="0" max="1" step="0.01" value="0.5" class="w-16">
+                </div>
+                <div
+                    class="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/5 whitespace-nowrap">
+                    <span class="text-[8px] font-black text-white/30">MUSIC</span>
+                    <input type="range" id="mV" min="0" max="1" step="0.01" value="0.8" class="w-16">
+                </div>
+                <div
+                    class="flex items-center gap-2 bg-white/5 rounded-full px-3 py-1.5 border border-white/5 whitespace-nowrap">
+                    <span class="text-[8px] font-black text-white/30">SYNC</span>
+                    <input type="range" id="oR" min="-2" max="2" step="0.1" value="0" class="w-16">
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <audio id="vA"></audio><audio id="mA"></audio>
+
+    <script>
+        lucide.createIcons();
+        const API = 'http://localhost:8000';
+        let lyrics = [], tid = null, playing = false, lastIdx = -1, offset = 0;
+        const vA = document.getElementById('vA'), mA = document.getElementById('mA');
+
+        function updateUI() { if (document.getElementById('aF').files[0]) execute(); }
+
+        async function processYoutube() {
+            const url = document.getElementById('ytUrl').value;
+            if (!url) { alert("Please paste a YouTube URL"); return; }
+
+            document.getElementById('logPanel').classList.add('active');
+            document.getElementById('lC').innerHTML = '<div class="opacity-50">> Fetching YouTube metadata...</div>';
+
+            try {
+                const res = await (await fetch(`${API}/api/process_youtube`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                })).json();
+
+                if (res.error) throw new Error(res.error);
+
+                tid = res.task_id;
+                const ev = new EventSource(`${API}/api/logs/${tid}`);
+                ev.onmessage = (e) => {
+                    document.getElementById('lC').innerHTML += `<div>> ${e.data}</div>`;
+                    document.getElementById('lC').scrollTop = 9999;
+                    if (e.data.includes("FOUND_LRC_SIGNAL")) fetch(`${API}/api/status/${tid}`).then(r => r.json()).then(d => { if (d.lyrics) renderLyrics(d.lyrics); });
+                    if (e.data.includes("TASK_COMPLETED")) { ev.close(); poll(); }
+                };
+                poll();
+            } catch (err) {
+                document.getElementById('lC').innerHTML += `<div class="text-red-400">> Error: ${err.message}</div>`;
+                setTimeout(() => document.getElementById('logPanel').classList.remove('active'), 3000);
+            }
+        }
+
+        async function execute() {
+            const fd = new FormData(); fd.append("audio", document.getElementById('aF').files[0]);
+            document.getElementById('logPanel').classList.add('active');
+            document.getElementById('lC').innerHTML = '<div class="opacity-50">> Booting AI Engine...</div>';
+            const res = await (await fetch(`${API}/api/upload`, { method: 'POST', body: fd })).json();
+            tid = res.task_id;
+            const ev = new EventSource(`${API}/api/logs/${tid}`);
+            ev.onmessage = (e) => {
+                document.getElementById('lC').innerHTML += `<div>> ${e.data}</div>`;
+                document.getElementById('lC').scrollTop = 9999;
+                if (e.data.includes("FOUND_LRC_SIGNAL")) fetch(`${API}/api/status/${tid}`).then(r => r.json()).then(d => { if (d.lyrics) renderLyrics(d.lyrics); });
+                if (e.data.includes("TASK_COMPLETED")) { ev.close(); poll(); }
+            };
+            poll();
+        }
+
+        async function poll() {
+            const d = await (await fetch(`${API}/api/status/${tid}`)).json();
+            const p = d.progress || 0;
+            document.getElementById('pBar').style.width = p + '%';
+            document.getElementById('pP').innerText = Math.round(p) + '%';
+            document.getElementById('minionSquad').style.left = p + '%';
+            if (d.status === 'completed') { setTimeout(() => document.getElementById('logPanel').classList.remove('active'), 2000); load(tid); }
+            else setTimeout(poll, 1500);
+        }
+
+        async function load(id) {
+            const d = await (await fetch(`${API}/api/status/${id}`)).json();
+            document.getElementById('songTitle').innerText = d.title.toUpperCase();
+            vA.src = `${API}/download/${id}/vocals`; mA.src = `${API}/download/${id}/instrumental`;
+            renderLyrics(d.lyrics); fetchHistory();
+            vA.onloadedmetadata = () => { };
+        }
+
+        function renderLyrics(lrc) {
+            lyrics = lrc || [];
+            document.getElementById('lyricContainer').innerHTML = lyrics.map((l, i) => `<div id="lrc-${i}" class="lyric-line">${l.text}</div>`).join('');
+            lastIdx = -1;
+        }
+
+        function togglePlay() {
+            if (playing) { vA.pause(); mA.pause(); }
+            else { mA.currentTime = vA.currentTime; vA.play(); mA.play(); requestAnimationFrame(sync); }
+            playing = !playing;
+            document.getElementById('playIcon').setAttribute('data-lucide', playing ? 'pause' : 'play');
+            lucide.createIcons();
+        }
+
+        function sync() {
+            if (!playing) return;
+            document.getElementById('skB').value = (vA.currentTime / vA.duration) * 100;
+            if (Math.abs(vA.currentTime - mA.currentTime) > 0.03) mA.currentTime = vA.currentTime;
+            const time = vA.currentTime + offset;
+            let idx = -1;
+            for (let i = 0; i < lyrics.length; i++) { if (time >= lyrics[i].time) idx = i; else break; }
+            if (idx !== lastIdx && idx !== -1) {
+                document.querySelectorAll('.lyric-line').forEach((l, i) => {
+                    l.className = 'lyric-line';
+                    if (i === idx) l.classList.add('lyric-active');
+                    if (i < idx) l.classList.add('lyric-past');
+                });
+                const active = document.getElementById(`lrc-${idx}`);
+                if (active) document.getElementById('lyricContainer').scrollTo({ top: active.offsetTop - 300, behavior: 'smooth' });
+                lastIdx = idx;
+            }
+            requestAnimationFrame(sync);
+        }
+
+        async function fetchHistory() {
+            const h = await (await fetch(`${API}/api/history`)).json();
+            document.getElementById('hL').innerHTML = Object.entries(h).map(([id, item]) => `
+                <div class="relative group bg-white/5 p-3 rounded-2xl cursor-pointer hover:bg-white/10 transition border border-white/5 mb-2" onclick="load('${id}')">
+                    <p class="text-[9px] font-bold text-white/60 truncate pr-14 uppercase">${item.title}</p>
+                    <button onclick="deleteH(event, '${id}')" class="absolute right-2 top-2.5 bg-orange-400 text-black px-2 py-0.5 rounded text-[7px] font-black">DEL</button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function deleteH(e, id) { e.stopPropagation(); fetch(`${API}/api/history/${id}`, { method: 'DELETE' }).then(() => fetchHistory()); }
+        function cancelProcess() { if (confirm("Terminate?")) fetch(`${API}/api/stop/${tid}`, { method: 'POST' }).then(() => location.reload()); }
+        function fmt(s) { if (isNaN(s)) return "00:00"; const m = Math.floor(s / 60), ss = Math.floor(s % 60); return `${m.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`; }
+        function skip(s) { vA.currentTime += s; mA.currentTime = vA.currentTime; }
+        vV.oninput = (e) => { vA.volume = e.target.value; };
+        mV.oninput = (e) => { mA.volume = e.target.value; };
+        skB.oninput = (e) => { const t = (e.target.value / 100) * vA.duration; vA.currentTime = t; mA.currentTime = t; lastIdx = -1; };
+        oR.oninput = (e) => { offset = parseFloat(e.target.value); lastIdx = -1; };
+        fetchHistory();
+    </script>
+</body>
+
+</html>
