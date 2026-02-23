@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.cache
+*.egg-info/
+venv/
+.venv/
+
+# audio workspace covers large model outputs
+audio_workspace/
+
+# IDE/editor
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# miscellaneous
+*.log
+*.tmp
+sample.wav
