@@ -59,7 +59,7 @@ def validate_path(path: str, base_dir: Path) -> Path:
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "https://your-domain.com",
-    "https://karaoke-web-app-alpha.vercel.app"
+    "https://<YOUR_VERCEL_URL>"
 ]
 
 app.add_middleware(
